@@ -12,61 +12,85 @@ use Carbon\Carbon;
 class OtpController extends Controller
 {
     /**
-     * Show the OTP verification form.
+     * ========================
+     * 🌐 WEB FLOW
+     * ========================
      */
-    public function showVerifyForm()
+
+    // Show OTP verification form (web)
+    public function showVerifyForm(Request $request)
     {
-        // If already verified, go to dashboard
         if (Auth::check() && Auth::user()->is_verified) {
             return redirect()->route('dashboard');
         }
 
-        return view('auth.verify-otp');
+        return view('auth.verify-otp', [
+            'user_id' => $request->query('user_id'),   // present for Google flow
+            'is_new'  => $request->query('new') == 1,  // present for Google-first-login
+        ]);
     }
 
-    /**
-     * Verify the OTP entered by the user.
-     */
+    // Verify OTP (web)
     public function verify(Request $request)
     {
-        $request->validate([
-            'otp_code' => ['required', 'string', 'min:6', 'max:6'],
-        ]);
+        // Register flow: NO user_id (use Auth::user())
+        // Google flow: HAS user_id (use that)
+        $rules = ['otp_code' => 'required|string|size:6'];
+        if ($request->filled('user_id')) {
+            $rules['user_id'] = 'integer';
+        }
+        $request->validate($rules);
 
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
+        $user = $request->filled('user_id')
+            ? User::find($request->input('user_id'))
+            : Auth::user();
 
         if (!$user) {
             return redirect()->route('login');
         }
 
-        // ✅ check OTP matches and not expired
-        if (
-            (string)$user->otp_code === (string)$request->otp_code &&
-            $user->otp_expires_at &&
-            Carbon::now()->lessThanOrEqualTo($user->otp_expires_at)
-        ) {
-            $user->is_verified = true;
-            $user->otp_code = null;
-            $user->otp_expires_at = null;
-            $user->save();
+        $otpOk = hash_equals((string) $user->otp_code, (string) $request->input('otp_code'));
+        $notExpired = $user->otp_expires_at && Carbon::now()->lessThanOrEqualTo($user->otp_expires_at);
 
-            return redirect()->route('dashboard')->with('status', 'Email verified successfully!');
+        if ($otpOk && $notExpired) {
+            $user->forceFill([
+                'is_verified'       => true,
+                'email_verified_at' => $user->email_verified_at ?? now(), // ✅ allow Jetstream 'verified' middleware
+                'otp_code'          => null,
+                'otp_expires_at'    => null,
+            ])->save();
+
+            // Ensure they are logged in
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            // First-time Google login? (POST hidden input or query param)
+            $isNewGoogle = $request->boolean('new') || $request->query('new') == 1;
+
+            if ($isNewGoogle) {
+                return redirect()
+                    ->route('password.setup', $user->id)
+                    ->with('status', 'OTP verified! Please set your password.');
+            }
+
+            // Normal register flow → straight to dashboard
+            return redirect()
+                ->route('dashboard')
+                ->with('status', 'Email verified successfully!');
         }
 
         return back()->withErrors(['otp_code' => 'Invalid or expired OTP, please try again.']);
     }
 
-    /**
-     * Resend a fresh OTP to the user's email.
-     */
-    public function resend()
+    // Resend OTP (web) — supports both flows
+    public function resend(Request $request)
     {
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
+        $user = $request->filled('user_id')
+            ? User::find($request->input('user_id'))
+            : Auth::user();
 
         if (!$user) {
-            return redirect()->route('login');
+            return back()->withErrors(['otp_code' => 'User not found. Please login again.']);
         }
 
         self::sendOtp($user);
@@ -75,19 +99,69 @@ class OtpController extends Controller
     }
 
     /**
-     * Generate and send a new OTP to the user's email.
+     * ========================
+     * 📱 API FLOW
+     * ========================
+     */
+
+    public function verifyApi(Request $request)
+    {
+        $request->validate(['otp_code' => 'required|string|size:6']);
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $otpOk = hash_equals((string) $user->otp_code, (string) $request->input('otp_code'));
+        $notExpired = $user->otp_expires_at && Carbon::now()->lessThanOrEqualTo($user->otp_expires_at);
+
+        if ($otpOk && $notExpired) {
+            $user->forceFill([
+                'is_verified'       => true,
+                'email_verified_at' => $user->email_verified_at ?? now(), // keep API behavior consistent
+                'otp_code'          => null,
+                'otp_expires_at'    => null,
+            ])->save();
+
+            return response()->json(['message' => 'Email verified successfully!']);
+        }
+
+        return response()->json(['error' => 'Invalid or expired OTP'], 422);
+    }
+
+    public function resendApi(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        self::sendOtp($user);
+
+        return response()->json(['message' => 'A new OTP has been sent to your email. It will expire in 5 minutes.']);
+    }
+
+    /**
+     * ========================
+     * 🔐 COMMON FUNCTION
+     * ========================
      */
     public static function sendOtp(User $user): void
     {
-        $otp = (string)random_int(100000, 999999);
+        $otp = (string) random_int(100000, 999999);
 
-        $user->otp_code = $otp;
-        $user->otp_expires_at = Carbon::now()->addMinutes(5); // ✅ expires in 5 mins
-        $user->save();
+        $user->forceFill([
+            'otp_code'       => $otp,
+            'otp_expires_at' => Carbon::now()->addMinutes(5),
+        ])->save();
 
-        Mail::raw("Your GAMERZ2.0 OTP is: {$otp}\n\nNote: This code will expire in 5 minutes.", function ($message) use ($user) {
-            $message->to($user->email)
-                    ->subject('GAMERZ2.0 Email Verification OTP');
-        });
+        Mail::raw(
+            "Your GAMERZ2.0 OTP is: {$otp}\n\nNote: This code will expire in 5 minutes.",
+            function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('GAMERZ2.0 Email Verification OTP');
+            }
+        );
     }
 }

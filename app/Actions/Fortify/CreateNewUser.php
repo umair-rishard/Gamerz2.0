@@ -35,7 +35,7 @@ class CreateNewUser implements CreatesNewUsers
             'is_verified' => false,   // custom field
         ]);
 
-        // Send OTP after registration
+        // ✅ Send OTP exactly once
         OtpController::sendOtp($user);
 
         return $user;

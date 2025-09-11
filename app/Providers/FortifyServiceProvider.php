@@ -14,8 +14,6 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Contracts\RegisterResponse;
-use App\Http\Controllers\Auth\OtpController;
-use Illuminate\Support\Facades\Auth;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -46,15 +44,12 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
-        // Custom register response → send OTP then redirect
+        // Custom register response → only redirect to OTP page
         $this->app->singleton(RegisterResponse::class, function () {
             return new class implements RegisterResponse {
                 public function toResponse($request)
                 {
-                    $user = Auth::user();
-                    if ($user) {
-                        OtpController::sendOtp($user);
-                    }
+                    //  No OTP here, just redirect
                     return redirect()->route('verify.otp');
                 }
             };
