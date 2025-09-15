@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\AdminPasswordConfirm; // ✅ import your custom admin middleware
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,9 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ----------------------
         // Custom middleware aliases
+        // ----------------------
         $middleware->alias([
-            'otp.verified' => \App\Http\Middleware\EnsureUserIsVerified::class,
+            'otp.verified'           => \App\Http\Middleware\EnsureUserIsVerified::class,
+            'admin.password.confirm' => AdminPasswordConfirm::class, // ✅ added here
         ]);
 
         // ----------------------

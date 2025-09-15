@@ -2,15 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\Admin;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         // Seed categories & products
@@ -19,19 +16,23 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
         ]);
 
-        // Create a demo user
-        \App\Models\User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('password'), // password = "password"
-        ]);
+        // Demo user
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => bcrypt('password'),
+            ]
+        );
 
-        // Create a demo admin
-        \App\Models\Admin::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('admin123'),
-            'is_super' => true,
-        ]);
+        // Admin with 2FA capability
+        Admin::updateOrCreate(
+            ['email' => 'umairrishard54@gmail.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => bcrypt('admin123'),
+                'email_verified_at' => now(), // required by Jetstream/Sanctum
+            ]
+        );
     }
 }

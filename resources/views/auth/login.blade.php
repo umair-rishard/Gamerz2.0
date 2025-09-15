@@ -57,7 +57,8 @@
 
         <!-- Google Login Button -->
         <div class="flex justify-center">
-            <button id="googleLoginBtn"
+            <!-- IMPORTANT: type="button" so it doesn't submit the form -->
+            <button type="button" id="googleLoginBtn"
                 class="flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
                 <svg class="w-5 h-5 mr-2" viewBox="0 0 48 48">
                     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.65 30.47 0 24 0 14.62 0 6.4 5.32 2.55 13.05l7.98 6.2C12.33 13.28 17.74 9.5 24 9.5z"/>
@@ -72,65 +73,74 @@
     </x-authentication-card>
 </x-guest-layout>
 
-<!-- ✅ Firebase CDN Compat Versions -->
+<!-- Firebase CDN Compat Versions -->
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
 <script>
-  // Your Firebase config
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBEmRyeQYwTSzYxg0CWE2GYH9b5_dC0ol0",
     authDomain: "gamerz-7c030.firebaseapp.com",
     projectId: "gamerz-7c030",
-    storageBucket: "gamerz-7c030.appspot.com", // ✅ small fix here: use .appspot.com not .firebasestorage.app
+    storageBucket: "gamerz-7c030.appspot.com",
     messagingSenderId: "555671661814",
     appId: "1:555671661814:web:177654b132350531e610d7"
   };
 
-  // Initialize Firebase (compat mode)
+  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
 
   const auth = firebase.auth();
   const provider = new firebase.auth.GoogleAuthProvider();
 
-  document.getElementById("googleLoginBtn").addEventListener("click", () => {
-    auth.signInWithPopup(provider)
-      .then(async (result) => {
-        const idToken = await result.user.getIdToken();
+  // 🔹 Always show the account chooser
+  provider.setCustomParameters({ prompt: 'select_account' });
 
-        // Send token to backend
-        const response = await fetch("/api/google-login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ token: idToken })
-        });
+  const googleBtn = document.getElementById("googleLoginBtn");
 
-        const data = await response.json();
-        console.log("Backend response:", data);
+  googleBtn.addEventListener("click", async () => {
+    try {
+      // prevent double-click
+      googleBtn.disabled = true;
 
-        // ✅ Handle cases
-        if (data.status === "new_user") {
-          alert("Welcome! Please verify OTP to set your password.");
-          window.location.href = "/verify-otp?user_id=" + data.user_id + "&new=1";
-        }
-        else if (data.status === "otp_required") {
-          alert("Please verify OTP to continue.");
-          window.location.href = "/verify-otp?user_id=" + data.user_id;
-        }
-        else if (data.status === "success" && data.token) {
-          alert("Google login successful! Redirecting to dashboard...");
-          window.location.href = "/dashboard";
-        }
-        else {
-          alert("Backend verification failed.");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        alert("Google login failed: " + error.message);
+      // If a Firebase user session exists, sign out first so chooser shows
+      if (auth.currentUser) {
+        await auth.signOut();
+      }
+
+      // Open Google popup and get Firebase user
+      const result = await auth.signInWithPopup(provider);
+
+      // Get Firebase ID token
+      const idToken = await result.user.getIdToken();
+
+      // Send token to backend API (absolute URL avoids CSRF)
+      const response = await fetch("http://127.0.0.1:8000/api/google-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ token: idToken })
       });
+
+      const data = await response.json();
+      console.log("Backend response:", data);
+
+      // 🔹 Match your controller's statuses
+      if (data.status === "password_setup") {
+        window.location.href = "/set-password/" + data.user_id;
+      } else if (data.status === "success" && data.token) {
+        window.location.href = "/dashboard";
+      } else {
+        alert("Backend verification failed: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Google login failed: " + err.message);
+    } finally {
+      googleBtn.disabled = false;
+    }
   });
 </script>

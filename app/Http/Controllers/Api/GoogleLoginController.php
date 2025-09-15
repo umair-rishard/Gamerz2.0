@@ -15,8 +15,28 @@ class GoogleLoginController extends Controller
 
     public function __construct()
     {
-        // Uses your config/firebase.php -> credentials.file path
-        $factory = (new Factory)->withServiceAccount(config('firebase.credentials.file'));
+        // Read the service-account path from config/firebase.php
+        // Your config uses: config('firebase.projects.app.credentials')
+        $creds = config('firebase.projects.app.credentials');
+
+        // Fallback to env if needed
+        if (!$creds) {
+            $creds = env('FIREBASE_CREDENTIALS', env('GOOGLE_APPLICATION_CREDENTIALS'));
+        }
+
+        // Make absolute if a relative path was given in .env
+        if ($creds && !file_exists($creds) && file_exists(base_path($creds))) {
+            $creds = base_path($creds);
+        }
+
+        if (!$creds || !file_exists($creds)) {
+            throw new \RuntimeException(
+                'Firebase service account JSON not found. ' .
+                'Set FIREBASE_CREDENTIALS in .env to the correct path.'
+            );
+        }
+
+        $factory = (new Factory)->withServiceAccount($creds);
         $this->auth = $factory->createAuth();
     }
 
@@ -36,9 +56,9 @@ class GoogleLoginController extends Controller
             }
 
             // Verify Firebase ID token
-            $verified = $this->auth->verifyIdToken($idToken);
-            $uid      = $verified->claims()->get('sub');
-            $firebaseUser = $this->auth->getUser($uid);
+            $verified      = $this->auth->verifyIdToken($idToken);
+            $uid           = $verified->claims()->get('sub');
+            $firebaseUser  = $this->auth->getUser($uid);
 
             if (!$firebaseUser || empty($firebaseUser->email)) {
                 return response()->json(['status' => 'error', 'message' => 'No email from Google'], 422);
@@ -49,11 +69,9 @@ class GoogleLoginController extends Controller
 
             if (!$user) {
                 $user = User::create([
-                    'name'     => $firebaseUser->displayName ?: $firebaseUser->email,
-                    'email'    => $firebaseUser->email,
-                    // temp random password; user will set a real one
-                    'password' => bcrypt(Str::random(24)),
-                    // mark as verified so OTP middleware doesn't block the flow
+                    'name'        => $firebaseUser->displayName ?: $firebaseUser->email,
+                    'email'       => $firebaseUser->email,
+                    'password'    => bcrypt(Str::random(24)), // temp; user will set a real one
                     'is_verified' => true,
                 ]);
 
@@ -64,13 +82,7 @@ class GoogleLoginController extends Controller
                 ]);
             }
 
-            // Existing user: if they never set a real password (optional check)
-            // You can detect by a flag, or keep it simple: always ask to set if they just used Google before.
-            // Here we'll check a simple heuristic: if the password was randomly generated (length >= 50 not reliable),
-            // instead: add a nullable column like `password_set_at`. For now we’ll always let them in if they already exist.
-            // If you *want* to force set-password once, return 'password_setup' here conditionally.
-
-            // Normal login path -> issue Sanctum token
+            // Existing user → issue Sanctum token
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
@@ -81,9 +93,11 @@ class GoogleLoginController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Google login failed: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            // Surface a helpful message during development
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Verification failed',
+                'message' => 'Verification failed: '.$e->getMessage(),
             ], 401);
         }
     }

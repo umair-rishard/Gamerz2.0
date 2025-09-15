@@ -9,7 +9,8 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Auth\OtpController;
-use App\Http\Controllers\Api\GoogleLoginController; 
+use App\Http\Controllers\Api\GoogleLoginController;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful; 
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +24,11 @@ use App\Http\Controllers\Api\GoogleLoginController;
 // Auth (Public)
 // ----------------------
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/google-login', [GoogleLoginController::class, 'login']); 
+
+//  Google login should NOT use Sanctum's stateful CSRF middleware
+Route::post('/google-login', [GoogleLoginController::class, 'login'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+
 // You may also add: Route::post('/register', [AuthController::class, 'register']); if using API register
 
 // ----------------------
