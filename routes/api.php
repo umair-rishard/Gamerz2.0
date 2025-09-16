@@ -2,14 +2,18 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
 use App\Models\Category;
 use App\Models\Product;
+
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Api\GoogleLoginController;
+
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful; 
 
 /*
@@ -25,68 +29,57 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 // ----------------------
 Route::post('/login', [AuthController::class, 'login']);
 
-//  Google login should NOT use Sanctum's stateful CSRF middleware
+// Google login (no CSRF/stateful)
 Route::post('/google-login', [GoogleLoginController::class, 'login'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
-// You may also add: Route::post('/register', [AuthController::class, 'register']); if using API register
+// ----------------------
+// Public Endpoints (data)
+// ----------------------
+Route::get('/categories', fn () => Category::all());
+Route::get('/products', fn () => Product::all());
+Route::get('/products/{id}', fn ($id) => Product::findOrFail($id));
 
 // ----------------------
-// Public Endpoints
-// ----------------------
-Route::get('/categories', function () {
-    return Category::all();
-});
-
-Route::get('/products', function () {
-    return Product::all();
-});
-
-Route::get('/products/{id}', function ($id) {
-    return Product::findOrFail($id);
-});
-
-// ----------------------
-// Authenticated Endpoints
+// Authenticated Endpoints (Sanctum Protected)
 // ----------------------
 Route::middleware('auth:sanctum')->group(function () {
 
-    // ----------------------
     // Current User
-    // ----------------------
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
-
-    // Auth profile + token management
+    Route::get('/user', fn (Request $request) => $request->user());
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
 
-    // ----------------------
     // OTP Verification (API flow)
-    // ----------------------
+    Route::post('/verify-otp', [OtpController::class, 'verify']); // API version
+    Route::post('/verify-otp/resend', [OtpController::class, 'resend']);
     Route::post('/register/verify-otp', [OtpController::class, 'verifyApi']);
     Route::post('/register/resend-otp', [OtpController::class, 'resendApi']);
 
-    // ----------------------
+    // Password setup (Google users)
+    Route::post('/set-password/{user_id}', [\App\Http\Controllers\Auth\PasswordSetupController::class, 'store']);
+
+    // Admin logout (API style, returns JSON)
+    Route::post('/admin/logout', function (Request $request) {
+        Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return response()->json(['message' => 'Admin logged out']);
+    });
+
     // Cart
-    // ----------------------
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart/add', [CartController::class, 'store']);
     Route::put('/cart/{item}', [CartController::class, 'update']);
     Route::delete('/cart/{item}', [CartController::class, 'destroy']);
 
-    // ----------------------
     // Wishlist
-    // ----------------------
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist', [WishlistController::class, 'store']);
     Route::delete('/wishlist/{product}', [WishlistController::class, 'destroy']);
 
-    // ----------------------
     // Orders
-    // ----------------------
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
 });
