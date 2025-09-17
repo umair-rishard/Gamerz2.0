@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Api\GoogleLoginController;
+use App\Http\Controllers\Api\CategoryController; // ← NEW
 
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful; 
 
@@ -36,7 +37,7 @@ Route::post('/google-login', [GoogleLoginController::class, 'login'])
 // ----------------------
 // Public Endpoints (data)
 // ----------------------
-Route::get('/categories', fn () => Category::all());
+// ❌ Removed Category GETs from API (your rule: GETs belong in web.php)
 Route::get('/products', fn () => Product::all());
 Route::get('/products/{id}', fn ($id) => Product::findOrFail($id));
 
@@ -48,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Current User
     Route::get('/user', fn (Request $request) => $request->user());
     Route::get('/me', [AuthController::class, 'me']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
 
@@ -82,4 +84,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
+
+    // ✅ Categories CRUD (Admin via API; no GETs here)
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 });
