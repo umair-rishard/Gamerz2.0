@@ -21,6 +21,8 @@ use App\Livewire\Admin\Products\ProductForm;
 use App\Livewire\Admin\Categories\CategoryList;
 use App\Livewire\Admin\Categories\CategoryForm;
 
+use App\Http\Controllers\Api\ProductController;
+
 /*
 |--------------------------------------------------------------------------
 | Public
@@ -33,7 +35,7 @@ Route::get('/', fn () => view('welcome'));
 | User Login (Fortify default)
 |--------------------------------------------------------------------------
 */
-// ✅ This restores the normal user login page
+//  This restores the normal user login page
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 
 /*
@@ -103,3 +105,8 @@ Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
     $request->session()->regenerateToken();
     return redirect()->route('admin.login');
 })->name('admin.logout');
+
+
+// Public Product GET routes (for frontend / Axios)
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');

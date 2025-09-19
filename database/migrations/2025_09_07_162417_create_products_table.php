@@ -17,10 +17,10 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);
             $table->integer('stock')->default(0);
-            $table->string('image_path')->nullable(); //  match Product model
+            $table->string('image_path')->nullable(); 
             $table->foreignId('category_id')
                   ->constrained()
-                  ->onDelete('cascade'); //  ensures if category deleted, products go too
+                  ->onDelete('cascade'); 
             $table->timestamps();
         });
     }

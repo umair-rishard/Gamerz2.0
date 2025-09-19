@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Cart;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -33,20 +34,43 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            // Calculate total and check stock
+            $total = 0;
+            foreach ($cart->items as $item) {
+                $product = $item->product;
+
+                if (!$product) {
+                    throw new \Exception("Product not found for cart item.");
+                }
+
+                if ($product->stock < $item->quantity) {
+                    throw new \Exception("Not enough stock for {$product->name}. Available: {$product->stock}, Requested: {$item->quantity}");
+                }
+
+                $total += $item->quantity * $item->price_at_add;
+            }
+
             // Create the order
             $order = Order::create([
                 'user_id' => $userId,
-                'status' => 'pending',
-                'total' => $cart->items->sum(fn($item) => $item->quantity * $item->price_at_add),
+                'status'  => 'pending',
+                'total'   => $total,
             ]);
 
-            // Move items from cart to order_items
+            // Move items from cart to order_items and decrement stock
             foreach ($cart->items as $item) {
+                $product = $item->product;
+
+                // Decrement stock
+                $product->stock -= $item->quantity;
+                $product->save();
+
+                // Create order item
                 OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item->product_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price_at_add,
+                    'order_id'  => $order->id,
+                    'product_id'=> $product->id,
+                    'quantity'  => $item->quantity,
+                    'price'     => $item->price_at_add,
                 ]);
             }
 
@@ -55,7 +79,10 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return response()->json(['message' => 'Order placed successfully', 'order' => $order]);
+            return response()->json([
+                'message' => 'Order placed successfully',
+                'order'   => $order->load('items.product')
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Order failed', 'error' => $e->getMessage()], 500);

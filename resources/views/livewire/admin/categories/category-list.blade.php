@@ -86,7 +86,7 @@
             @endif
 
             {{-- Controls + Grid --}}
-<section class="rounded-3xl shadow-2xl p-8 bg-gray-50 text-slate-900 border border-blue-900/40">
+            <section class="rounded-3xl shadow-2xl p-8 bg-gray-50 text-slate-900 border border-blue-900/40">
                 {{-- Search and Filters --}}
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-10">
                     <div class="relative flex-1 max-w-3xl">
@@ -152,7 +152,7 @@
                                                 In Stock
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-lg shadow-gray-500/30">
+                                            <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-gray-500/30">
                                                 <span class="w-2 h-2 bg-white/70 rounded-full mr-2"></span>
                                                 Out of Stock
                                             </span>
