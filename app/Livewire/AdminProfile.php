@@ -25,16 +25,34 @@ class AdminProfile extends Component
 
     public function mount()
     {
+        // Try to get the admin via session guard. If there is no session,
+        // we still render the page (Axios token flow keeps working).
         $this->admin = Auth::guard('admin')->user();
-        $this->name  = $this->admin->name;
-        $this->email = $this->admin->email;
+
+        if (! $this->admin) {
+            // Leave fields empty; the UI will still load.
+            $this->name  = '';
+            $this->email = '';
+            return;
+        }
+
+        $this->name  = $this->admin->name ?? '';
+        $this->email = $this->admin->email ?? '';
     }
 
     public function updateProfile()
     {
+        if (! $this->admin) {
+            session()->flash('error_profile', 'Not logged in.');
+            return;
+        }
+
         $this->validate([
             'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('admins', 'email')->ignore($this->admin->id)],
+            'email' => [
+                'required', 'email', 'max:255',
+                Rule::unique('admins', 'email')->ignore($this->admin->id),
+            ],
         ]);
 
         $this->admin->update([
@@ -47,9 +65,14 @@ class AdminProfile extends Component
 
     public function updatePassword()
     {
+        if (! $this->admin) {
+            session()->flash('error_password', 'Not logged in.');
+            return;
+        }
+
         $this->validate([
             'current_password' => ['required'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password'         => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         if (! Hash::check($this->current_password, $this->admin->password)) {
@@ -69,6 +92,11 @@ class AdminProfile extends Component
 
     public function deleteAccount()
     {
+        if (! $this->admin) {
+            session()->flash('error_delete', 'Not logged in.');
+            return;
+        }
+
         $this->validate([
             'confirm_password_for_delete' => ['required'],
         ]);

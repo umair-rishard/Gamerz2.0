@@ -9,7 +9,6 @@ use App\Http\Controllers\Auth\GoogleWebController;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 
 // Livewire – Admin
-use App\Livewire\AdminLogin;
 use App\Livewire\AdminDashboard;
 use App\Livewire\AdminProfile;
 
@@ -35,7 +34,7 @@ Route::get('/', fn () => view('welcome'));
 | User Login (Fortify default)
 |--------------------------------------------------------------------------
 */
-//  This restores the normal user login page
+// User login (Fortify’s own login)
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 
 /*
@@ -66,39 +65,39 @@ Route::middleware([
 
 /*
 |--------------------------------------------------------------------------
-| Admin (Livewire pages) — GET only
+| Admin Pages (Axios Token Auth handled in frontend)
 |--------------------------------------------------------------------------
 */
-Route::get('/admin/login', AdminLogin::class)->name('admin.login');
+// Admin login (Blade page that uses Axios)
+Route::view('/admin/login', 'livewire.admin.admin-login')->name('admin.login');
 
-Route::middleware(['auth:admin'])->group(function () {
-    Route::get('/admin/dashboard', AdminDashboard::class)->name('admin.dashboard');
-    Route::get('/admin/profile', AdminProfile::class)->name('admin.profile');
+// Dashboard & Profile
+Route::get('/admin/dashboard', AdminDashboard::class)->name('admin.dashboard');
+Route::get('/admin/profile', AdminProfile::class)->name('admin.profile');
 
-    // Products (Livewire pages)
-    Route::get('/admin/products', ProductList::class)->name('admin.products.index');
-    Route::get('/admin/products/create', ProductForm::class)->name('admin.products.create');
-    Route::get('/admin/products/{product}/edit', ProductForm::class)->name('admin.products.edit');
+// Products
+Route::get('/admin/products', ProductList::class)->name('admin.products.index');
+Route::get('/admin/products/create', ProductForm::class)->name('admin.products.create');
+Route::get('/admin/products/{product}/edit', ProductForm::class)->name('admin.products.edit');
 
-    // Categories (Livewire pages)
-    Route::get('/admin/categories', CategoryList::class)->name('admin.categories.index');
-    Route::get('/admin/categories/create', CategoryForm::class)->name('admin.categories.create');
-    Route::get('/admin/categories/{category}/edit', CategoryForm::class)->name('admin.categories.edit');
-});
+// Categories
+Route::get('/admin/categories', CategoryList::class)->name('admin.categories.index');
+Route::get('/admin/categories/create', CategoryForm::class)->name('admin.categories.create');
+Route::get('/admin/categories/{category}/edit', CategoryForm::class)->name('admin.categories.edit');
 
 /*
 |--------------------------------------------------------------------------
 | Form POSTs (web)
 |--------------------------------------------------------------------------
 */
-// OTP (web form submits)
+// OTP
 Route::post('/verify-otp', [OtpController::class, 'verify'])->name('verify.otp.post');
 Route::post('/verify-otp/resend', [OtpController::class, 'resend'])->name('verify.otp.resend');
 
 // Password setup
 Route::post('/set-password/{user_id}', [PasswordSetupController::class, 'store'])->name('password.setup.store');
 
-// Admin logout
+// Admin logout (fallback only; frontend clears token)
 Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Auth::guard('admin')->logout();
     $request->session()->invalidate();
@@ -106,7 +105,10 @@ Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
     return redirect()->route('admin.login');
 })->name('admin.logout');
 
-
-// Public Product GET routes (for frontend / Axios)
+/*
+|--------------------------------------------------------------------------
+| Public Product GET routes (for frontend / Axios)
+|--------------------------------------------------------------------------
+*/
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');

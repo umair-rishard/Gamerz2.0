@@ -3,7 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\AdminPasswordConfirm; // ✅ import your custom admin middleware
+use App\Http\Middleware\AdminPasswordConfirm;
+use App\Http\Middleware\IsAdmin; // ✅ import your custom IsAdmin middleware
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,7 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // ----------------------
         $middleware->alias([
             'otp.verified'           => \App\Http\Middleware\EnsureUserIsVerified::class,
-            'admin.password.confirm' => AdminPasswordConfirm::class, // ✅ added here
+            'admin.password.confirm' => AdminPasswordConfirm::class,
+            'is_admin'               => IsAdmin::class, // ✅ added here
         ]);
 
         // ----------------------

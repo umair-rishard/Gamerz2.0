@@ -208,4 +208,19 @@
     window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAllModals(); });
   });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = "Bearer " + token;
+      axios.defaults.headers.common["Accept"] = "application/json";
+      console.log("Admin token set in headers ✅");
+    } else {
+      console.warn("⚠️ No admin_token found in localStorage. Login again.");
+    }
+  });
+</script>
+
+
 </div>
