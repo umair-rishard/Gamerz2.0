@@ -58,7 +58,7 @@ class AdminTwoFactorController extends Controller
         $admin->two_factor_secret         = null;
         $admin->two_factor_recovery_codes = null;
         $admin->two_factor_confirmed_at   = null;
-        $admin->save(); // <-- same here
+        $admin->save(); 
 
         return response()->json(['message' => '2FA disabled']);
     }

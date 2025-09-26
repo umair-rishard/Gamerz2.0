@@ -48,8 +48,8 @@
   </a>
 
   {{-- Users --}}
-  <a href="#"
-     class="flex items-center px-4 py-3 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 transition">
+<a href="{{ route('admin.users.index') }}"
+   class="flex items-center px-4 py-3 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 transition">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A8.962 8.962 0 0112 15c2.21 0 4.21.805 5.879 2.139M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
     </svg>
@@ -57,8 +57,8 @@
   </a>
 
   {{-- Orders --}}
-  <a href="#"
-     class="flex items-center px-4 py-3 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 transition">
+  <a href="{{ route('admin.orders.index') }}"
+    class="flex items-center px-4 py-3 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 transition">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18M9 3v18m6-18v18"/>
     </svg>

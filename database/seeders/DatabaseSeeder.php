@@ -10,10 +10,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Seed categories & products
+        // Seed categories, products, and orders
         $this->call([
             CategorySeeder::class,
             ProductSeeder::class,
+            OrderSeeder::class, // ✅ add this line
         ]);
 
         // Demo user

@@ -22,6 +22,10 @@ class AuthController extends Controller
 
         /** @var \App\Models\User $user */
         $user  = $request->user();
+
+        // ✅ Update last_login timestamp
+        $user->update(['last_login' => now()]);
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([

@@ -22,6 +22,17 @@ use App\Livewire\Admin\Categories\CategoryForm;
 
 use App\Http\Controllers\Api\ProductController;
 
+// Livewire – Orders page
+use App\Livewire\Admin\Orders\OrderList;
+
+// Livewire – Orders show page
+use App\Livewire\Admin\Orders\OrderShow;
+
+// Livewire – User page
+use App\Livewire\Admin\Users\UserList;
+
+
+
 /*
 |--------------------------------------------------------------------------
 | Public
@@ -112,3 +123,10 @@ Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
 */
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+
+// Orders
+Route::get('/admin/orders', OrderList::class)->name('admin.orders.index');
+Route::get('/admin/orders/{orderId}', OrderShow::class)->name('admin.orders.show');
+
+// Users
+Route::get('/admin/users', UserList::class)->name('admin.users.index');

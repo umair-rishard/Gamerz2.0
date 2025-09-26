@@ -25,7 +25,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $userId = Auth::id();
-        $cart = Cart::with('items.product')->where('user_id', $userId)->first();
+        $cart = Cart::with('items')->where('user_id', $userId)->first(); // no eager load product to avoid stale data
 
         if (!$cart || $cart->items->isEmpty()) {
             return response()->json(['message' => 'Cart is empty'], 400);
@@ -34,10 +34,10 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            // Calculate total and check stock
+            // Calculate total and validate stock
             $total = 0;
             foreach ($cart->items as $item) {
-                $product = $item->product;
+                $product = Product::find($item->product_id); // fetch fresh from DB
 
                 if (!$product) {
                     throw new \Exception("Product not found for cart item.");
@@ -59,19 +59,20 @@ class OrderController extends Controller
 
             // Move items from cart to order_items and decrement stock
             foreach ($cart->items as $item) {
-                $product = $item->product;
+                $product = Product::find($item->product_id); // always fresh
 
-                // Decrement stock
-                $product->stock -= $item->quantity;
-                $product->save();
+                if ($product) {
+                    // Decrement stock safely
+                    $product->decrement('stock', $item->quantity);
 
-                // Create order item
-                OrderItem::create([
-                    'order_id'  => $order->id,
-                    'product_id'=> $product->id,
-                    'quantity'  => $item->quantity,
-                    'price'     => $item->price_at_add,
-                ]);
+                    // Create order item
+                    OrderItem::create([
+                        'order_id'   => $order->id,
+                        'product_id' => $product->id,
+                        'quantity'   => $item->quantity,
+                        'price'      => $item->price_at_add,
+                    ]);
+                }
             }
 
             // Clear the cart

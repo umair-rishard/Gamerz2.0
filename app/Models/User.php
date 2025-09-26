@@ -25,6 +25,7 @@ class User extends Authenticatable
         'otp_code',
         'is_verified',
         'two_factor_enabled',
+        'last_login',
     ];
 
     /**
@@ -37,7 +38,7 @@ class User extends Authenticatable
         'remember_token',
         'two_factor_recovery_codes',
         'two_factor_secret',
-        'otp_code',   // hide OTP so it never leaks in JSON
+        'otp_code',
     ];
 
     /**
@@ -58,9 +59,26 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'is_verified' => 'boolean',
-            'two_factor_enabled' => 'boolean',
-            'password' => 'hashed',
+            'is_verified'       => 'boolean',
+            'two_factor_enabled'=> 'boolean',
+            'password'          => 'hashed',
+            'last_login'        => 'datetime',
         ];
+    }
+
+    /**
+     * Relation: A user can have many orders.
+     */
+    public function orders()
+    {
+        return $this->hasMany(\App\Models\Order::class);
+    }
+
+    /**
+     * Relation: A user can have many wishlist items.
+     */
+    public function wishlist()
+    {
+        return $this->hasMany(\App\Models\Wishlist::class);
     }
 }

@@ -199,7 +199,7 @@
           <div class="rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 shadow-xl">
             <div class="flex items-center justify-between px-6 pt-6">
               <h3 class="text-xl font-bold text-slate-900">Recent Orders</h3>
-              <a href="{{ url('/admin/orders') }}" class="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors">View all →</a>
+              <a href="{{ route('admin.orders.index') }}" class="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors">View all →</a>
             </div>
             <div class="overflow-x-auto max-w-full">
               <table class="w-full text-left text-sm">
@@ -244,7 +244,7 @@
               </table>
             </div>
             <div class="px-6 py-4 border-t border-slate-200 text-right">
-              <a href="{{ url('/admin/orders') }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 text-sm font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg">
+              <a href="{{ route('admin.orders.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 text-sm font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg">
                 Manage Orders
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -360,7 +360,7 @@
                 </svg>
                 Add Product
               </a>
-              <a href="{{ url('/admin/orders') }}"
+             <a href="{{ route('admin.orders.index') }}"
                  class="group rounded-xl bg-white border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition-all text-center shadow-sm hover:border-sky-300 hover:text-sky-700 hover:bg-sky-50">
                 <svg class="w-5 h-5 mx-auto mb-1 text-slate-500 group-hover:text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>

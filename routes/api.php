@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminAuthController;    // Admin API login
 use App\Http\Controllers\Api\AdminProfileController; // Admin Profile API
-use App\Http\Controllers\Api\AdminTwoFactorController; // <<< NEW: 2FA controller
+use App\Http\Controllers\Api\AdminTwoFactorController; // 2FA controller
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\OrderController;
@@ -70,6 +70,26 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin logout (Token revoke)
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
+
+    // ========================
+    // Orders (user-side)
+    // ========================
+    Route::get('/orders',  [OrderController::class, 'index']);  // current user's orders
+    Route::post('/orders', [OrderController::class, 'store']);  // place order from cart
+
+    // ========================
+    // Cart
+    // ========================
+    Route::get('/cart', [CartController::class, 'index']);    // view cart
+    Route::post('/cart', [CartController::class, 'store']);   // add item
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']); // remove item
+
+    // ========================
+    // Wishlist
+    // ========================
+    Route::get('/wishlist', [WishlistController::class, 'index']);    // get wishlist items
+    Route::post('/wishlist', [WishlistController::class, 'store']);   // add item
+    Route::delete('/wishlist/{id}', [WishlistController::class, 'destroy']); // remove item
 
     // ========================
     // Admin Profile
