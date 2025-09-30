@@ -15,6 +15,14 @@
   <!-- Dark overlay -->
   <div class="absolute inset-0 bg-black bg-opacity-70"></div>
 
+  <!-- Home button -->
+  <a href="http://127.0.0.1:8000/" title="Back to Home" aria-label="Back to Home"
+     class="z-10 fixed top-4 left-4 inline-flex items-center justify-center w-11 h-11 rounded-full bg-white bg-opacity-90 hover:bg-opacity-100 shadow-lg border border-gray-200 focus:outline-none">
+      <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h4a1 1 0 001-1V10"/>
+      </svg>
+  </a>
+
   <!-- Glass card -->
   <div
     class="relative w-full max-w-md rounded-2xl shadow-2xl border p-8 bg-white bg-opacity-20 border-white border-opacity-20"

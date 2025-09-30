@@ -9,7 +9,63 @@ use App\Models\Product;
 
 class ProductController extends Controller
 {
-    // GET /api/admin-products → List (with filters)
+    /*
+    |----------------------------------------------------------------------
+    | USER ENDPOINTS
+    |----------------------------------------------------------------------
+    */
+
+    // GET /api/products → User list
+    public function userIndex(Request $request)
+    {
+        $perPage = (int) $request->query('per_page', 12);
+
+        $products = Product::with('category')
+            ->orderByDesc('created_at')
+            ->paginate(max(1, $perPage));
+
+        return response()->json($products->through(function ($p) {
+            return [
+                'id'           => $p->id,
+                'name'         => $p->name,
+                'description'  => $p->description,
+                'price'        => (float) $p->price,
+                'stock'        => $p->stock,
+                'category_id'  => $p->category_id,
+                'category'     => $p->category?->name,
+                'image_url'    => $p->image_path ? asset('storage/' . $p->image_path) : null,
+                'specs'        => $p->specs ? json_decode($p->specs, true) : null,
+                'extra_images' => $p->extra_images ? json_decode($p->extra_images, true) : [], // ✅ NEW
+            ];
+        }));
+    }
+
+    // GET /api/products/{id} → User detail
+    public function userShow($id)
+    {
+        $p = Product::with('category')->findOrFail($id);
+
+        return response()->json([
+            'id'           => $p->id,
+            'name'         => $p->name,
+            'description'  => $p->description,
+            'price'        => (float) $p->price,
+            'stock'        => $p->stock,
+            'category_id'  => $p->category_id,
+            'category'     => $p->category?->name,
+            'image_url'    => $p->image_path ? asset('storage/' . $p->image_path) : null,
+            'specs'        => $p->specs ? json_decode($p->specs, true) : null,
+            'extra_images' => $p->extra_images ? json_decode($p->extra_images, true) : [], // ✅ NEW
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | ADMIN ENDPOINTS
+    |----------------------------------------------------------------------
+    */
+
+    // GET /api/admin-products → List
     public function index(Request $request)
     {
         $perPage = (int) $request->query('per_page', 12);
@@ -39,16 +95,14 @@ class ProductController extends Controller
 
         return response()->json($products->through(function ($p) {
             return [
-                'id'           => $p->id,
-                'name'         => $p->name,
-                'description'  => $p->description,
-                'price'        => number_format($p->price, 2), // formatted for UI
-                'stock'        => $p->stock,
-                'category_id'  => $p->category_id,
-                'category'     => $p->category?->name,
-                'image_url'    => $p->image_path
-                                   ? asset('storage/' . $p->image_path)
-                                   : null,
+                'id'          => $p->id,
+                'name'        => $p->name,
+                'description' => $p->description,
+                'price'       => number_format($p->price, 2), // formatted for admin
+                'stock'       => $p->stock,
+                'category_id' => $p->category_id,
+                'category'    => $p->category?->name,
+                'image_url'   => $p->image_path ? asset('storage/' . $p->image_path) : null,
             ];
         }));
     }
@@ -59,16 +113,14 @@ class ProductController extends Controller
         $p = Product::with('category')->findOrFail($id);
 
         return response()->json([
-            'id'           => $p->id,
-            'name'         => $p->name,
-            'description'  => $p->description,
-            'price'        => number_format($p->price, 2),
-            'stock'        => $p->stock,
-            'category_id'  => $p->category_id,
-            'category'     => $p->category?->name,
-            'image_url'    => $p->image_path
-                               ? asset('storage/' . $p->image_path)
-                               : null,
+            'id'          => $p->id,
+            'name'        => $p->name,
+            'description' => $p->description,
+            'price'       => number_format($p->price, 2),
+            'stock'       => $p->stock,
+            'category_id' => $p->category_id,
+            'category'    => $p->category?->name,
+            'image_url'   => $p->image_path ? asset('storage/' . $p->image_path) : null,
         ]);
     }
 
@@ -84,12 +136,10 @@ class ProductController extends Controller
             'image'       => 'nullable|image|max:2048',
         ]);
 
-        // 🛠️ Clean price
         if (isset($validated['price'])) {
             $validated['price'] = (float) str_replace(',', '', $validated['price']);
         }
 
-        // 🛠️ Handle new image
         if ($request->hasFile('image')) {
             $validated['image_path'] = $request->file('image')->store('products', 'public');
         }
@@ -114,12 +164,10 @@ class ProductController extends Controller
             'image'       => 'nullable|image|max:2048',
         ]);
 
-        // 🛠️ Clean price
         if (isset($validated['price'])) {
             $validated['price'] = (float) str_replace(',', '', $validated['price']);
         }
 
-        // 🛠️ Handle new image (delete old first)
         if ($request->hasFile('image')) {
             if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
                 Storage::disk('public')->delete($product->image_path);

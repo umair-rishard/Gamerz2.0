@@ -10,10 +10,13 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;   // ✅ for PDF receipts
 
 class OrderController extends Controller
 {
-    // Show current user's orders
+    /**
+     * Show current user's orders (with items + products)
+     */
     public function index()
     {
         return Order::with('items.product')
@@ -21,11 +24,13 @@ class OrderController extends Controller
             ->get();
     }
 
-    // Place a new order from cart
+    /**
+     * Place a new order from the cart
+     */
     public function store(Request $request)
     {
         $userId = Auth::id();
-        $cart = Cart::with('items')->where('user_id', $userId)->first(); // no eager load product to avoid stale data
+        $cart = Cart::with('items')->where('user_id', $userId)->first();
 
         if (!$cart || $cart->items->isEmpty()) {
             return response()->json(['message' => 'Cart is empty'], 400);
@@ -37,7 +42,7 @@ class OrderController extends Controller
             // Calculate total and validate stock
             $total = 0;
             foreach ($cart->items as $item) {
-                $product = Product::find($item->product_id); // fetch fresh from DB
+                $product = Product::find($item->product_id);
 
                 if (!$product) {
                     throw new \Exception("Product not found for cart item.");
@@ -55,17 +60,21 @@ class OrderController extends Controller
                 'user_id' => $userId,
                 'status'  => 'pending',
                 'total'   => $total,
+                'shipping_name'    => $request->shipping_name ?? 'N/A',
+                'shipping_phone'   => $request->shipping_phone ?? 'N/A',
+                'shipping_address' => $request->shipping_address ?? 'N/A',
+                'shipping_city'    => $request->shipping_city ?? 'N/A',
+                'shipping_postal'  => $request->shipping_postal ?? 'N/A',
+                'payment_method'   => $request->payment_method ?? 'N/A',
             ]);
 
-            // Move items from cart to order_items and decrement stock
+            // Move items from cart → order_items + update stock
             foreach ($cart->items as $item) {
-                $product = Product::find($item->product_id); // always fresh
+                $product = Product::find($item->product_id);
 
                 if ($product) {
-                    // Decrement stock safely
                     $product->decrement('stock', $item->quantity);
 
-                    // Create order item
                     OrderItem::create([
                         'order_id'   => $order->id,
                         'product_id' => $product->id,
@@ -88,5 +97,31 @@ class OrderController extends Controller
             DB::rollBack();
             return response()->json(['message' => 'Order failed', 'error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Show a single order (only if belongs to the user)
+     */
+    public function show($id)
+    {
+        $order = Order::with('items.product')
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        return response()->json($order);
+    }
+
+    /**
+     * Download Receipt as PDF
+     */
+    public function downloadReceipt($id)
+    {
+        $order = Order::with('items.product')
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView('orders.receipt-pdf', compact('order'));
+
+        return $pdf->download("order-{$order->id}-receipt.pdf");
     }
 }

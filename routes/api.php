@@ -2,18 +2,18 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\AdminAuthController;    // Admin API login
-use App\Http\Controllers\Api\AdminProfileController; // Admin Profile API
-use App\Http\Controllers\Api\AdminTwoFactorController; // 2FA controller
+use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\AdminProfileController;
+use App\Http\Controllers\Api\AdminTwoFactorController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\GoogleLoginController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\CheckoutController; 
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Auth\PasswordSetupController;
 
@@ -23,8 +23,6 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-| These routes are for mobile apps / API clients.
-| Authenticated routes use Sanctum tokens.
 */
 
 // ----------------------
@@ -37,14 +35,14 @@ Route::post('/google-login', [GoogleLoginController::class, 'login'])
 // ----------------------
 // Admin Auth (Public)
 // ----------------------
-Route::post('/admin/login', [AdminAuthController::class, 'login']);          // login
-Route::post('/admin/verify-2fa', [AdminAuthController::class, 'verify2fa']); // 2FA verify
+Route::post('/admin/login', [AdminAuthController::class, 'login']);
+Route::post('/admin/verify-2fa', [AdminAuthController::class, 'verify2fa']);
 
 // ----------------------
-// Public Endpoints
+// Public Endpoints (User)
 // ----------------------
-Route::get('/products', [ProductController::class, 'index']);     // list
-Route::get('/products/{id}', [ProductController::class, 'show']); // details
+Route::get('/products', [ProductController::class, 'userIndex']);   // ✅ new user list
+Route::get('/products/{id}', [ProductController::class, 'userShow']); // ✅ new user detail
 
 // ----------------------
 // Authenticated Endpoints (Sanctum Protected)
@@ -68,47 +66,53 @@ Route::middleware('auth:sanctum')->group(function () {
     // Password setup (Google users)
     Route::post('/set-password/{user_id}', [PasswordSetupController::class, 'store']);
 
-    // Admin logout (Token revoke)
+    // Admin logout
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
 
     // ========================
-    // Orders (user-side)
+    // Checkout Summary
     // ========================
-    Route::get('/orders',  [OrderController::class, 'index']);  // current user's orders
-    Route::post('/orders', [OrderController::class, 'store']);  // place order from cart
+    Route::get('/checkout', [CheckoutController::class, 'summary']); // ✅ NEW: neat summary for UI
 
     // ========================
-    // Cart
+    // Orders
     // ========================
-    Route::get('/cart', [CartController::class, 'index']);    // view cart
-    Route::post('/cart', [CartController::class, 'store']);   // add item
-    Route::delete('/cart/{id}', [CartController::class, 'destroy']); // remove item
+    Route::get('/orders',  [OrderController::class, 'index']);   // list user orders
+    Route::post('/orders', [OrderController::class, 'store']);   // place order
+    Route::get('/orders/{id}', [OrderController::class, 'show']); // fetch single order
 
     // ========================
-    // Wishlist
+    // Cart (Protected)
     // ========================
-    Route::get('/wishlist', [WishlistController::class, 'index']);    // get wishlist items
-    Route::post('/wishlist', [WishlistController::class, 'store']);   // add item
-    Route::delete('/wishlist/{id}', [WishlistController::class, 'destroy']); // remove item
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);             // add (always positive)
+    Route::patch('/cart/{item}', [CartController::class, 'update']);    // set exact quantity
+    Route::delete('/cart/{item}', [CartController::class, 'destroy']);  // remove item
 
     // ========================
-    // Admin Profile
+    // Wishlist (Protected)
+    // ========================
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{id}', [WishlistController::class, 'destroy']);
+
+    // ========================
+    // Admin Profile (Protected)
     // ========================
     Route::middleware('is_admin')->group(function () {
-        // Profile CRUD
-        Route::get('/admin/profile', [AdminProfileController::class, 'show']);                 // fetch profile
-        Route::put('/admin/profile', [AdminProfileController::class, 'update']);               // update name/email
-        Route::post('/admin/change-password', [AdminProfileController::class, 'changePassword']); // update password
-        Route::post('/admin/delete', [AdminProfileController::class, 'destroy']);              // delete account
+        Route::get('/admin/profile', [AdminProfileController::class, 'show']);
+        Route::put('/admin/profile', [AdminProfileController::class, 'update']);
+        Route::post('/admin/change-password', [AdminProfileController::class, 'changePassword']);
+        Route::post('/admin/delete', [AdminProfileController::class, 'destroy']);
 
-        // 2FA actions (used by your Blade)
+        // 2FA
         Route::get('/admin/2fa/recovery-codes', [AdminTwoFactorController::class, 'recoveryCodes']);
-        Route::post('/admin/2fa/regenerate',     [AdminTwoFactorController::class, 'regenerateRecoveryCodes']);
-        Route::post('/admin/2fa/disable',        [AdminTwoFactorController::class, 'disable']);
+        Route::post('/admin/2fa/regenerate', [AdminTwoFactorController::class, 'regenerateRecoveryCodes']);
+        Route::post('/admin/2fa/disable', [AdminTwoFactorController::class, 'disable']);
     });
 
     // ========================
-    // Admin-only (CRUD)
+    // Admin CRUD (Protected)
     // ========================
     Route::middleware('is_admin')->group(function () {
         // Categories
@@ -116,11 +120,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/categories/{id}', [CategoryController::class, 'update']);
         Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-        // Products (Admin CRUD)
-        Route::get('/admin-products', [ProductController::class, 'index']);               // list
-        Route::get('/admin-products/{product}', [ProductController::class, 'show']);      // single
-        Route::post('/admin-products', [ProductController::class, 'store']);              // create
-        Route::patch('/admin-products/{product}', [ProductController::class, 'update']);  // update
-        Route::delete('/admin-products/{product}', [ProductController::class, 'destroy']); // delete
+        // Products
+        Route::get('/admin-products', [ProductController::class, 'index']);        // admin list
+        Route::get('/admin-products/{product}', [ProductController::class, 'show']); // admin detail
+        Route::post('/admin-products', [ProductController::class, 'store']);
+        Route::patch('/admin-products/{product}', [ProductController::class, 'update']);
+        Route::delete('/admin-products/{product}', [ProductController::class, 'destroy']);
     });
 });

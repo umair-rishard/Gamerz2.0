@@ -14,17 +14,27 @@ class Product extends Model
         'description',
         'price',
         'stock',
-        'image_path',   
+        'image_path',
         'category_id',
     ];
 
-    //  Casts
     protected $casts = [
         'price' => 'decimal:2',
         'stock' => 'integer',
     ];
 
-    //  Relationships
+    // ✅ Accessor: always return full URL for image
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute()
+    {
+        if ($this->image_path) {
+            return asset('storage/' . $this->image_path);
+        }
+        return asset('images/placeholder.png'); // fallback if missing
+    }
+
+    // ---------------- Relationships ----------------
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');

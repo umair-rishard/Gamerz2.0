@@ -98,7 +98,7 @@
 
     try {
         const response = await axios.post("/api/login", { email, password });
-        localStorage.setItem("user_token", response.data.token);
+        localStorage.setItem("auth_token", response.data.token);
         alert("Login successful!");
         window.location.href = "/dashboard";
     } catch (error) {
@@ -126,7 +126,7 @@
       if (data.status === "password_setup") {
         window.location.href = "/set-password/" + data.user_id;
       } else if (data.status === "success" && data.token) {
-        localStorage.setItem("user_token", data.token);
+      localStorage.setItem("auth_token", data.token);
         alert("Google login successful!");
         window.location.href = "/dashboard";
       } else {
