@@ -98,7 +98,7 @@ class ProductController extends Controller
                 'id'          => $p->id,
                 'name'        => $p->name,
                 'description' => $p->description,
-                'price'       => number_format($p->price, 2), // formatted for admin
+                'price'       => number_format($p->price, 2), 
                 'stock'       => $p->stock,
                 'category_id' => $p->category_id,
                 'category'    => $p->category?->name,

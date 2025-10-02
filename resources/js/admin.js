@@ -18,7 +18,7 @@ if (token) {
 // expose globally
 window.axios = axios;
 
-// ✅ Warm up Sanctum CSRF cookie ASAP (so /api/* calls won’t 401)
+//  Warm up Sanctum CSRF cookie ASAP (so /api/* calls won’t 401)
 (async () => {
   try {
     await axios.get("/sanctum/csrf-cookie");

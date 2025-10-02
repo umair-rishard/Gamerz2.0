@@ -32,113 +32,33 @@ use App\Livewire\Admin\Users\UserList;
 
 /*
 |--------------------------------------------------------------------------
-| Public
+| ADMIN AREA (Blade + Livewire)
+| Axios token auth is handled on the frontend for admin pages.
+| Order: Login, Dashboard/Profile, Products, Categories, Orders, Users, Logout.
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    return view('home');
-})->name('home');
 
-/*
-|--------------------------------------------------------------------------
-| User Login (Fortify default)
-|--------------------------------------------------------------------------
-*/
-// User login (Fortify’s own login)
-Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-
-// Public Contact Page
-Route::view('/contact', 'contact')->name('contact');
-
-/*
-|--------------------------------------------------------------------------
-| OTP / Auth helper pages
-|--------------------------------------------------------------------------
-*/
-Route::get('/verify-otp', [OtpController::class, 'showVerifyForm'])->name('verify.otp');
-Route::get('/google/finish', [GoogleWebController::class, 'finish'])
-    ->name('google.finish')
-    ->middleware('signed');
-Route::get('/set-password/{user_id}', [PasswordSetupController::class, 'show'])
-    ->name('password.setup');
-
-/*
-|--------------------------------------------------------------------------
-| User (Jetstream) – Protected
-|--------------------------------------------------------------------------
-*/
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-    'otp.verified',
-])->group(function () {
-    // New Modern User Dashboard
-    Route::get('/dashboard', function () {
-        return view('dashboard.main'); // new modern dashboard.blade.php
-    })->name('dashboard');
-
-    //  Checkout Page
-    Route::view('/checkout', 'checkout.index')->name('checkout.index');
-
-    //  Order Confirmation Page
-    Route::get('/orders/{id}/confirm', function ($id) {
-        return view('orders.confirm', compact('id'));
-    })->name('orders.confirm');
-
-    //  Download Receipt (PDF) from Api\OrderController
-    Route::get('/orders/{order}/receipt', [OrderController::class, 'downloadReceipt'])
-        ->name('orders.receipt');
-
-    //  Cart & Wishlist
-    Route::view('/cart', 'cart.index')->name('cart.index');
-    Route::view('/wishlist', 'wishlist.index')->name('wishlist.index');
-
-    //  User Dashboard Orders
-    Route::view('/dashboard/orders', 'dashboard.orders.order')->name('dashboard.orders.index');
-    Route::get('/dashboard/orders/{id}', function ($id) {
-        return view('dashboard.orders.show', compact('id'));
-    })->name('dashboard.orders.show');
-
-    //  User Reviews (only for delivered orders)
-    Route::get('/dashboard/orders/{id}/review', function ($id) {
-        return view('dashboard.orders.review', compact('id'));
-    })->name('dashboard.orders.review');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Admin Pages (Axios Token Auth handled in frontend)
-|--------------------------------------------------------------------------
-*/
 // Admin login (Blade page that uses Axios)
 Route::view('/admin/login', 'livewire.admin.admin-login')->name('admin.login');
 
-// Dashboard & Profile
+// Admin dashboard and profile
 Route::get('/admin/dashboard', AdminDashboard::class)->name('admin.dashboard');
 Route::get('/admin/profile', AdminProfile::class)->name('admin.profile');
 
-// Products (Admin)
+// Admin products: list, create, edit
 Route::get('/admin/products', ProductList::class)->name('admin.products.index');
 Route::get('/admin/products/create', ProductForm::class)->name('admin.products.create');
 Route::get('/admin/products/{product}/edit', ProductForm::class)->name('admin.products.edit');
 
-// Categories (Admin)
+// Admin categories: list, create, edit
 Route::get('/admin/categories', CategoryList::class)->name('admin.categories.index');
 Route::get('/admin/categories/create', CategoryForm::class)->name('admin.categories.create');
 Route::get('/admin/categories/{category}/edit', CategoryForm::class)->name('admin.categories.edit');
 
-/*
-|--------------------------------------------------------------------------
-| Form POSTs (web)
-|--------------------------------------------------------------------------
-*/
-// OTP
-Route::post('/verify-otp', [OtpController::class, 'verify'])->name('verify.otp.post');
-Route::post('/verify-otp/resend', [OtpController::class, 'resend'])->name('verify.otp.resend');
-
-// Password setup
-Route::post('/set-password/{user_id}', [PasswordSetupController::class, 'store'])->name('password.setup.store');
+// Admin orders and users
+Route::get('/admin/orders', OrderList::class)->name('admin.orders.index');
+Route::get('/admin/orders/{orderId}', OrderShow::class)->name('admin.orders.show');
+Route::get('/admin/users', UserList::class)->name('admin.users.index');
 
 // Admin logout (fallback only; frontend clears token)
 Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
@@ -148,26 +68,102 @@ Route::post('/admin/logout', function (\Illuminate\Http\Request $request) {
     return redirect()->route('admin.login');
 })->name('admin.logout');
 
+
 /*
 |--------------------------------------------------------------------------
-| Public Product Pages (Blade + Axios)
+| USER AREA (Jetstream Protected)
+| Middleware: auth:sanctum + jetstream session + verified + otp.verified
+| Includes: user dashboard, checkout, orders, receipt, cart, wishlist, reviews.
 |--------------------------------------------------------------------------
 */
-// Shop products
+Route::middleware([
+    'auth:sanctum',
+    config('jetstream.auth_session'),
+    'verified',
+    'otp.verified',
+])->group(function () {
+    // Modern user dashboard (Blade view entry)
+    Route::get('/dashboard', function () {
+        return view('dashboard.main'); 
+    })->name('dashboard');
+
+    // Checkout page
+    Route::view('/checkout', 'checkout.index')->name('checkout.index');
+
+    // Order confirmation page (view by order id)
+    Route::get('/orders/{id}/confirm', function ($id) {
+        return view('orders.confirm', compact('id'));
+    })->name('orders.confirm');
+
+    // Download receipt (PDF) via Api\OrderController
+    Route::get('/orders/{order}', [OrderController::class, 'downloadReceipt'])
+        ->name('orders.receipt');
+
+    // Cart and wishlist
+    Route::view('/cart', 'cart.index')->name('cart.index');
+    Route::view('/wishlist', 'wishlist.index')->name('wishlist.index');
+
+    // User dashboard orders list and show
+    Route::view('/dashboard/orders', 'dashboard.orders.order')->name('dashboard.orders.index');
+    Route::get('/dashboard/orders/{id}', function ($id) {
+        return view('dashboard.orders.show', compact('id'));
+    })->name('dashboard.orders.show');
+
+    // User reviews (only for delivered orders)
+    Route::get('/dashboard/orders/{id}/review', function ($id) {
+        return view('dashboard.orders.review', compact('id'));
+    })->name('dashboard.orders.review');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATION & OTP HELPERS (Public Endpoints)
+| Fortify login page, OTP verify/resend, Google sign-in finish, password setup.
+| Post routes are grouped here for easy reference during viva.
+|--------------------------------------------------------------------------
+*/
+
+// Fortify default login page (public)
+Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+
+// OTP verification pages
+Route::get('/verify-otp', [OtpController::class, 'showVerifyForm'])->name('verify.otp');
+Route::post('/verify-otp', [OtpController::class, 'verify'])->name('verify.otp.post');
+Route::post('/verify-otp/resend', [OtpController::class, 'resend'])->name('verify.otp.resend');
+
+// Google OAuth finish (signed URL)
+Route::get('/google/finish', [GoogleWebController::class, 'finish'])
+    ->name('google.finish')
+    ->middleware('signed');
+
+// Password setup pages
+Route::get('/set-password/{user_id}', [PasswordSetupController::class, 'show'])
+    ->name('password.setup');
+Route::post('/set-password/{user_id}', [PasswordSetupController::class, 'store'])
+    ->name('password.setup.store');
+
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PAGES (Blade + Axios)
+| Home, contact, product listing and product details.
+|--------------------------------------------------------------------------
+*/
+
+// Home page
+Route::get('/', function () {
+    return view('home');
+})->name('home');
+
+// Public contact page
+Route::view('/contact', 'contact')->name('contact');
+
+// Public product pages
 Route::get('/products', function () {
-    return view('products.index');   // Blade view
+    return view('products.index');   // Blade view for shop listing
 })->name('products.index');
 
-// Product details
 Route::get('/products/{id}', function ($id) {
-    return view('products.show', compact('id'));
+    return view('products.show', compact('id')); // Blade view for product details
 })->name('products.show');
-
-/*
-|--------------------------------------------------------------------------
-| Admin Orders + Users
-|--------------------------------------------------------------------------
-*/
-Route::get('/admin/orders', OrderList::class)->name('admin.orders.index');
-Route::get('/admin/orders/{orderId}', OrderShow::class)->name('admin.orders.show');
-Route::get('/admin/users', UserList::class)->name('admin.users.index');

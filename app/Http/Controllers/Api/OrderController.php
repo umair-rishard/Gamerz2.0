@@ -10,7 +10,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;   // ✅ for PDF receipts
+use Barryvdh\DomPDF\Facade\Pdf;   
 
 class OrderController extends Controller
 {
@@ -23,7 +23,7 @@ class OrderController extends Controller
             ->where('user_id', Auth::id())
             ->get();
 
-        // ✅ Add reviewed field explicitly
+        //  Add reviewed field explicitly
         $orders->each(function ($order) {
             $order->items->each(function ($item) {
                 $item->reviewed = (bool) $item->reviewed;
@@ -89,7 +89,7 @@ class OrderController extends Controller
                         'product_id' => $product->id,
                         'quantity'   => $item->quantity,
                         'price'      => $item->price_at_add,
-                        'reviewed'   => false, // ✅ ensure starts as false
+                        'reviewed'   => false, 
                     ]);
                 }
             }
@@ -118,7 +118,7 @@ class OrderController extends Controller
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
-        // ✅ Add reviewed field explicitly
+        //  Add reviewed field explicitly
         $order->items->each(function ($item) {
             $item->reviewed = (bool) $item->reviewed;
         });

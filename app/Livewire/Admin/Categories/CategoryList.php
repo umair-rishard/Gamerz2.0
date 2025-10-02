@@ -45,7 +45,7 @@ class CategoryList extends Component
         $s = trim($this->search);
 
         $categories = Category::query()
-            ->withCount('products') // show Products count on cards
+            ->withCount('products') 
             ->when($s !== '', function ($q) use ($s) {
                 $q->where(function ($w) use ($s) {
                     if (is_numeric($s)) {

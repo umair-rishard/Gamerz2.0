@@ -126,7 +126,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
   <script>
-    // ✅ Replace with your real Firebase config if different
     const firebaseConfig = {
       apiKey: "AIzaSyBEmRyeQYwTSzYxg0CWE2GYH9b5_dC0ol0",
       authDomain: "gamerz-7c030.firebaseapp.com",

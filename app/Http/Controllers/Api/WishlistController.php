@@ -19,7 +19,7 @@ class WishlistController extends Controller
             ->where('user_id', Auth::id())
             ->get();
 
-        // ✅ return plain array, no extra "wishlist" wrapper
+        
         return response()->json($wishlist);
     }
 

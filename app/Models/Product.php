@@ -23,7 +23,7 @@ class Product extends Model
         'stock' => 'integer',
     ];
 
-    // ✅ Accessor: always return full URL for image
+    //  Accessor: always return full URL for image
     protected $appends = ['image_url'];
 
     public function getImageUrlAttribute()

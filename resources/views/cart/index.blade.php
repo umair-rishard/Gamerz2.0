@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     listEl.addEventListener('change', async (e) => {
         const input = e.target.closest('.qty-input');
         if (!input) return;
-        if (isProgrammatic) return; // ignore our own writes
+        if (isProgrammatic) return; 
 
         const row = e.target.closest('.cart-row');
         const id  = row.dataset.itemId;

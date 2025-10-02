@@ -42,8 +42,8 @@ Route::post('/admin/verify-2fa', [AdminAuthController::class, 'verify2fa']);
 // ----------------------
 // Public Endpoints (User)
 // ----------------------
-Route::get('/products', [ProductController::class, 'userIndex']);   // ✅ user list
-Route::get('/products/{id}', [ProductController::class, 'userShow']); // ✅ user detail
+Route::get('/products', [ProductController::class, 'userIndex']);   
+Route::get('/products/{id}', [ProductController::class, 'userShow']); 
 
 // ========================
 // Reviews (Public view)
@@ -83,9 +83,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ========================
     // Orders
     // ========================
-    Route::get('/orders',  [OrderController::class, 'index']);    // list user orders
-    Route::post('/orders', [OrderController::class, 'store']);    // place order
-    Route::get('/orders/{id}', [OrderController::class, 'show']); // fetch single order
+    Route::get('/orders',  [OrderController::class, 'index']);    
+    Route::post('/orders', [OrderController::class, 'store']);    
+    Route::get('/orders/{id}', [OrderController::class, 'show']); 
 
     // ========================
     // Cart
@@ -105,7 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ========================
     // Reviews (CRUD)
     // ========================
-    Route::get('/my-review/{productId}', [ReviewController::class, 'myReview']); // ✅ FIXED (added)
+    Route::get('/my-review/{productId}', [ReviewController::class, 'myReview']); 
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{id}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);

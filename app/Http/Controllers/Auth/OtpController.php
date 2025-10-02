@@ -55,7 +55,7 @@ class OtpController extends Controller
         if ($otpOk && $notExpired) {
             $user->forceFill([
                 'is_verified'       => true,
-                'email_verified_at' => $user->email_verified_at ?? now(), // ✅ allow Jetstream 'verified' middleware
+                'email_verified_at' => $user->email_verified_at ?? now(), 
                 'otp_code'          => null,
                 'otp_expires_at'    => null,
             ])->save();
@@ -119,8 +119,7 @@ class OtpController extends Controller
         if ($otpOk && $notExpired) {
             $user->forceFill([
                 'is_verified'       => true,
-                'email_verified_at' => $user->email_verified_at ?? now(), // keep API behavior consistent
-                'otp_code'          => null,
+                'email_verified_at' => $user->email_verified_at ?? now(), 
                 'otp_expires_at'    => null,
             ])->save();
 

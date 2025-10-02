@@ -53,9 +53,9 @@ class CategoryForm extends Component
     public function save(): void
     {
         $data = $this->validate();
-        $data['image_path'] = $this->existingImage; // keep old path if no new one
+        $data['image_path'] = $this->existingImage; 
 
-        // Upload new image if provided
+        // Upload new image 
         if ($this->image) {
             $path = $this->image->store('categories', 'public');
             $data['image_path'] = $path;
@@ -65,7 +65,7 @@ class CategoryForm extends Component
                 Storage::disk('public')->delete($this->existingImage);
             }
 
-            $this->existingImage = $path; // update reference
+            $this->existingImage = $path; 
         }
 
         if ($this->categoryId) {

@@ -38,7 +38,7 @@ class AdminLogin extends Component
 
         $admin = Auth::guard('admin')->user();
 
-        // ✅ Check if admin has 2FA enabled
+        //  Check if admin has 2FA enabled
         if (!empty($admin->two_factor_secret)) {
             // Logout and force code input
             Auth::guard('admin')->logout();
@@ -83,7 +83,7 @@ class AdminLogin extends Component
             return null;
         }
 
-        // ✅ Success → log in admin
+        //  Success → log in admin
         Session::forget('admin.2fa.id');
         Auth::guard('admin')->login($admin);
         request()->session()->regenerate();

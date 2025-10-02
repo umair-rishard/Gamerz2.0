@@ -17,7 +17,7 @@ class ProductForm extends Component
 
     public string $name = '';
     public ?string $description = null;
-    public float $price = 0.00;   // float, not int
+    public float $price = 0.00;   
     public int $stock = 0;
     public ?int $category_id = null;
     public $image;
@@ -65,7 +65,7 @@ class ProductForm extends Component
         $payload = [
             'name'        => $this->name,
             'description' => $this->description,
-            'price'       => (float) $normalizedPrice, // store as float with 2 decimals
+            'price'       => (float) $normalizedPrice, 
             'stock'       => $this->stock,
             'category_id' => $this->category_id,
             'image_path'  => $this->existingImage, 
