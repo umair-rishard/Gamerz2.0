@@ -47,6 +47,9 @@ Route::get('/', function () {
 // User login (Fortify’s own login)
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 
+// Public Contact Page
+Route::view('/contact', 'contact')->name('contact');
+
 /*
 |--------------------------------------------------------------------------
 | OTP / Auth helper pages

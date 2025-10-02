@@ -104,7 +104,7 @@
                     <nav class="hidden md:flex items-center gap-10 text-[15px] font-semibold">
                         <a href="{{ route('home') }}" class="navlink text-white">Home</a>
                         <a href="{{ route('products.index') }}" class="navlink text-white">Products</a>
-                        <a href="#contact" class="navlink text-white">Contact</a>
+                        <a href="{{ route('contact') }}" class="navlink text-white">Contact</a>
                     </nav>
 
                     {{-- Right actions --}}
@@ -196,7 +196,7 @@
             <nav class="p-4 space-y-2 text-base font-semibold">
                 <a href="{{ route('home') }}" class="sheetlink">Home</a>
                 <a href="{{ route('products.index') }}" class="sheetlink">Products</a>
-                <a href="#contact" class="sheetlink">Contact</a>
+                <a href="{{ route('contact') }}" class="sheetlink">Contact</a>
 
                 <div class="pt-4 mt-4 border-t border-white/10">
                     <p class="text-xs uppercase tracking-widest text-white/50 mb-2">Account</p>

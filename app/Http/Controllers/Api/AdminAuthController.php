@@ -25,7 +25,7 @@ class AdminAuthController extends Controller
         /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
 
-        // ✅ If admin has 2FA enabled → don’t give token yet
+        // If admin has 2FA enabled → don’t give token yet
         if (!empty($admin->two_factor_secret)) {
             // logout immediately so token/session is not active
             Auth::guard('admin')->logout();
@@ -37,7 +37,7 @@ class AdminAuthController extends Controller
             ]);
         }
 
-        // ✅ If no 2FA → issue Sanctum token directly
+        //  If no 2FA → issue Sanctum token directly
         $token = $admin->createToken('admin-api-token')->plainTextToken;
 
         return response()->json([
@@ -76,7 +76,7 @@ class AdminAuthController extends Controller
             return response()->json(['message' => 'Invalid 2FA code'], 401);
         }
 
-        // ✅ Success → issue Sanctum token
+        //  Success → issue Sanctum token
         $token = $admin->createToken('admin-api-token')->plainTextToken;
 
         return response()->json([

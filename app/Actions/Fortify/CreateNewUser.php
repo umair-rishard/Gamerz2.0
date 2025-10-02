@@ -32,10 +32,10 @@ class CreateNewUser implements CreatesNewUsers
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
-            'is_verified' => false,   // custom field
+            'is_verified' => false,  
         ]);
 
-        // ✅ Send OTP exactly once
+        //  Send OTP once
         OtpController::sendOtp($user);
 
         return $user;

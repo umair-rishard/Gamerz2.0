@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CheckoutController; 
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Auth\PasswordSetupController;
+use App\Http\Controllers\Api\ReviewController;
 
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
@@ -41,8 +42,13 @@ Route::post('/admin/verify-2fa', [AdminAuthController::class, 'verify2fa']);
 // ----------------------
 // Public Endpoints (User)
 // ----------------------
-Route::get('/products', [ProductController::class, 'userIndex']);   // ✅ new user list
-Route::get('/products/{id}', [ProductController::class, 'userShow']); // ✅ new user detail
+Route::get('/products', [ProductController::class, 'userIndex']);   // ✅ user list
+Route::get('/products/{id}', [ProductController::class, 'userShow']); // ✅ user detail
+
+// ========================
+// Reviews (Public view)
+// ========================
+Route::get('/reviews/{productId}', [ReviewController::class, 'index']);
 
 // ----------------------
 // Authenticated Endpoints (Sanctum Protected)
@@ -72,29 +78,37 @@ Route::middleware('auth:sanctum')->group(function () {
     // ========================
     // Checkout Summary
     // ========================
-    Route::get('/checkout', [CheckoutController::class, 'summary']); // ✅ NEW: neat summary for UI
+    Route::get('/checkout', [CheckoutController::class, 'summary']); 
 
     // ========================
     // Orders
     // ========================
-    Route::get('/orders',  [OrderController::class, 'index']);   // list user orders
-    Route::post('/orders', [OrderController::class, 'store']);   // place order
+    Route::get('/orders',  [OrderController::class, 'index']);    // list user orders
+    Route::post('/orders', [OrderController::class, 'store']);    // place order
     Route::get('/orders/{id}', [OrderController::class, 'show']); // fetch single order
 
     // ========================
-    // Cart (Protected)
+    // Cart
     // ========================
     Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart', [CartController::class, 'store']);             // add (always positive)
-    Route::patch('/cart/{item}', [CartController::class, 'update']);    // set exact quantity
-    Route::delete('/cart/{item}', [CartController::class, 'destroy']);  // remove item
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::patch('/cart/{item}', [CartController::class, 'update']);
+    Route::delete('/cart/{item}', [CartController::class, 'destroy']);
 
     // ========================
-    // Wishlist (Protected)
+    // Wishlist
     // ========================
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist', [WishlistController::class, 'store']);
     Route::delete('/wishlist/{id}', [WishlistController::class, 'destroy']);
+
+    // ========================
+    // Reviews (CRUD)
+    // ========================
+    Route::get('/my-review/{productId}', [ReviewController::class, 'myReview']); // ✅ FIXED (added)
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::put('/reviews/{id}', [ReviewController::class, 'update']);
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 
     // ========================
     // Admin Profile (Protected)
@@ -112,7 +126,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ========================
-    // Admin CRUD (Protected)
+    // Admin CRUD
     // ========================
     Route::middleware('is_admin')->group(function () {
         // Categories
@@ -121,8 +135,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
         // Products
-        Route::get('/admin-products', [ProductController::class, 'index']);        // admin list
-        Route::get('/admin-products/{product}', [ProductController::class, 'show']); // admin detail
+        Route::get('/admin-products', [ProductController::class, 'index']);
+        Route::get('/admin-products/{product}', [ProductController::class, 'show']);
         Route::post('/admin-products', [ProductController::class, 'store']);
         Route::patch('/admin-products/{product}', [ProductController::class, 'update']);
         Route::delete('/admin-products/{product}', [ProductController::class, 'destroy']);

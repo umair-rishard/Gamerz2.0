@@ -30,7 +30,7 @@
             @endif
 
             {{-- Verify OTP (ONLY form on the page) --}}
-            <form method="POST" action="{{ route('verify.otp.post') }}" class="space-y-4">
+            <form id="verifyForm" method="POST" action="{{ route('verify.otp.post') }}" class="space-y-4">
                 @csrf
 
                 {{-- For Google flow we get user_id via query; for Register flow it’s empty --}}
@@ -49,24 +49,25 @@
                              class="block mt-1 w-full text-center text-lg tracking-widest"
                              type="text" name="otp_code" maxlength="6" required autofocus />
                 </div>
-
-                <div class="flex items-center justify-between">
-                    <x-button class="bg-blue-600 hover:bg-blue-700 text-white">
-                        {{ __('Verify OTP') }}
-                    </x-button>
-                </div>
             </form>
 
-            {{-- Separate form to resend OTP (DO NOT NEST) --}}
-            <form method="POST" action="{{ route('verify.otp.resend') }}" class="mt-4 text-right">
-                @csrf
-                @if(!empty($user_id))
-                    <input type="hidden" name="user_id" value="{{ $user_id }}">
-                @endif
-                <x-button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white">
-                    {{ __('Resend OTP') }}
+            {{-- Buttons Row: left submits verifyForm, right is resend form --}}
+            <div class="mt-4 flex items-center justify-between gap-4">
+                <x-button form="verifyForm" class="bg-blue-600 hover:bg-blue-700 text-white">
+                    {{ __('Verify OTP') }}
                 </x-button>
-            </form>
+
+                <form method="POST" action="{{ route('verify.otp.resend') }}" class="m-0">
+                    @csrf
+                    @if(!empty($user_id))
+                        <input type="hidden" name="user_id" value="{{ $user_id }}">
+                    @endif
+                    <x-button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white">
+                        {{ __('Resend OTP') }}
+                    </x-button>
+                </form>
+            </div>
+
         </div>
     </div>
 </x-guest-layout>

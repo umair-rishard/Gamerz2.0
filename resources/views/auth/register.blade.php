@@ -1,7 +1,8 @@
 <x-guest-layout>
     <x-authentication-card>
         <x-slot name="logo">
-            <x-authentication-card-logo />
+            {{-- Your custom logo --}}
+            <img src="{{ asset('images/logo1.png') }}" alt="Gamerz Logo" class="mx-auto h-16 w-16 object-contain">
         </x-slot>
 
         <x-validation-errors class="mb-4" />
